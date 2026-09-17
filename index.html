@@ -90,7 +90,7 @@
             letter-spacing: 0.5px; text-transform: uppercase; display: block;
         }
 
-        .header-actions-modern { display: flex; gap: 12px; align-items: center; }
+        .header-actions-modern { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .btn-ghost, .btn-gold, .theme-toggle { transition: var(--transition); }
         .btn-ghost {
             background: transparent; border: var(--glass-border); color: var(--text-primary);
@@ -226,10 +226,16 @@
             display: flex; align-items: center; justify-content: center; font-size: 44px; flex-shrink: 0;
             position: relative; box-shadow: 0 8px 16px rgba(0,0,0,0.1); overflow: hidden;
         }
+        .card-modern .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .card-modern .thumb .photo-count {
+            position: absolute; bottom: 6px; right: 6px; background: rgba(0,0,0,.75); color: #fff;
+            font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 30px; z-index: 2;
+            display: flex; align-items: center; gap: 4px;
+        }
         .card-modern .thumb .badge-verified {
             position: absolute; top: 8px; left: 8px; background: #10b981; color: white; font-size: 10px;
             font-weight: 700; padding: 3px 10px; border-radius: 30px; display: flex; align-items: center;
-            gap: 4px; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); z-index: 1;
+            gap: 4px; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4); z-index: 2;
         }
         .thumb::after {
             content: ''; position: absolute; inset: 0;
@@ -274,10 +280,9 @@
         }
         @media (max-width: 640px) {
             .header-inner { padding: 0 16px; }
-            .header-actions-modern .btn-ghost { display: none; }
             .layout-duo { padding: 0 16px; }
             .card-modern { flex-direction: column; align-items: stretch; }
-            .card-modern .thumb { width: 100%; height: 150px; }
+            .card-modern .thumb { width: 100%; height: 180px; }
             .hero-modern { padding: 40px 16px 50px 16px; border-radius: 0 0 24px 24px; }
         }
 
@@ -517,6 +522,33 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .payment-waiting p { font-size: 13.5px; color: var(--text-secondary); }
         .payment-waiting strong { color: var(--text-primary); }
+
+        /* ===== PHOTOS ===== */
+        .photo-picker {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px;
+        }
+        .photo-btn {
+            width: 90px; height: 90px; border-radius: 12px;
+            border: 2px dashed var(--glass-border); background: var(--bg-tag);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 4px; cursor: pointer; color: var(--text-secondary); font-size: 11px;
+            font-weight: 600; transition: var(--transition);
+        }
+        .photo-btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-light); }
+        .photo-btn i { font-size: 20px; }
+        .photo-btn input { display: none; }
+        .photo-thumb {
+            width: 90px; height: 90px; border-radius: 12px; overflow: hidden; position: relative;
+            border: var(--glass-border); background: var(--bg-tag);
+        }
+        .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .photo-thumb .remove {
+            position: absolute; top: 4px; right: 4px; width: 22px; height: 22px;
+            border-radius: 50%; background: rgba(0,0,0,.65); color: #fff; border: none;
+            font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .photo-thumb .remove:hover { background: #ef4444; }
+        .photo-hint { font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -752,6 +784,23 @@
 
                     <div class="auth-row">
                         <div class="form-group">
+                            <label for="pubVille">Ville</label>
+                            <div class="input-wrap">
+                                <i class="fas fa-city li"></i>
+                                <input type="text" id="pubVille" placeholder="Ex: Yaoundé" value="Yaoundé" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="pubMoisMin">Mois minimum à verser</label>
+                            <div class="input-wrap">
+                                <i class="fas fa-calendar li"></i>
+                                <input type="number" id="pubMoisMin" min="1" max="24" value="1" placeholder="1" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auth-row">
+                        <div class="form-group">
                             <label for="pubPrix">Prix mensuel (FCFA)</label>
                             <div class="input-wrap">
                                 <i class="fas fa-coins li"></i>
@@ -795,6 +844,18 @@
                     <div class="form-group">
                         <label for="pubDescription">Description (optionnel)</label>
                         <textarea id="pubDescription" placeholder="Quelques détails utiles : accès, sécurité, eau/électricité..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label><i class="fas fa-camera" style="color:var(--gold);"></i> Photos du bien (max 6)</label>
+                        <div class="photo-picker" id="photoPicker">
+                            <label class="photo-btn" for="photoInput">
+                                <i class="fas fa-plus"></i>
+                                <span>Ajouter</span>
+                                <input type="file" id="photoInput" accept="image/*" multiple />
+                            </label>
+                        </div>
+                        <div class="photo-hint">JPG/PNG · 5 Mo max par photo · la 1ère sera la photo principale</div>
                     </div>
 
                     <div class="form-group">
@@ -867,6 +928,7 @@
         let selectedLat = null;
         let selectedLng = null;
         let pollTimer = null;
+        let selectedPhotos = []; // { file, url }
 
         function pinIcon(active) {
             return L.divIcon({
@@ -934,17 +996,26 @@
 
         function renderCard(a) {
             const wa = waNumber(a.telephone);
+            const photos = Array.isArray(a.photos) ? a.photos.filter(Boolean) : [];
+            const hasPhotos = photos.length > 0;
+            const thumbContent = hasPhotos
+                ? `<img src="${photos[0]}" alt="${escapeHtml(a.titre)}" loading="lazy" />
+                   ${photos.length > 1 ? `<span class="photo-count"><i class="fas fa-images"></i> ${photos.length}</span>` : ''}
+                   <span class="badge-verified"><i class="fas fa-check-circle"></i> Vérifié</span>`
+                : `<span class="badge-verified"><i class="fas fa-check-circle"></i> Vérifié</span>${typeEmoji(a.type)}`;
+            
             return `
             <div class="card-modern" data-type="${escapeHtml(a.type)}" data-budget="${a.prix}" data-lat="${a.lat}" data-lng="${a.lng}" data-titre="${escapeHtml(a.titre)}" data-lieu="${escapeHtml(a.quartier)}">
-                <div class="thumb"><span class="badge-verified"><i class="fas fa-check-circle"></i> Vérifié</span>${typeEmoji(a.type)}</div>
+                <div class="thumb">${thumbContent}</div>
                 <div class="infos">
                     <div class="price mono">${a.prix.toLocaleString('fr-FR')} FCFA <small>/mois</small></div>
                     <div class="title">${escapeHtml(a.titre)}</div>
-                    <div class="location"><i class="fas fa-map-pin" style="color:var(--gold);"></i> ${escapeHtml(a.quartier)}, Yaoundé</div>
+                    <div class="location"><i class="fas fa-map-pin" style="color:var(--gold);"></i> ${escapeHtml(a.quartier)}, ${escapeHtml(a.ville || 'Yaoundé')}</div>
                     <div class="tags">
                         ${a.superficie ? `<span><i class="fas fa-ruler-combined"></i> ${a.superficie} m²</span>` : ''}
                         ${a.chambres ? `<span><i class="fas fa-bed"></i> ${a.chambres} ch.</span>` : ''}
                         ${a.sdb ? `<span><i class="fas fa-bath"></i> ${a.sdb} SDB</span>` : ''}
+                        ${a.mois_minimum && a.mois_minimum > 1 ? `<span><i class="fas fa-calendar-check"></i> ${a.mois_minimum} mois min.</span>` : ''}
                     </div>
                     <div class="card-footer-row">
                         <div class="rating"><i class="fas fa-star"></i> Nouveau</div>
@@ -1273,6 +1344,9 @@
                 showToast('« Mon espace » arrive bientôt 🙂', 'info');
             });
 
+            /* ============================================================
+               PUBLICATION D'ANNONCE + PHOTOS + PAIEMENT
+               ============================================================ */
             const publishOverlay = document.getElementById('publishOverlay');
             const publishForm = document.getElementById('publishForm');
             const paymentStep = document.getElementById('paymentStep');
@@ -1283,6 +1357,65 @@
 
             let currentAnnonceDraft = null;
 
+            function renderPhotoPicker() {
+                const picker = document.getElementById('photoPicker');
+                if (!picker) return;
+                // Supprimer toutes les vignettes existantes
+                Array.from(picker.querySelectorAll('.photo-thumb')).forEach(el => el.remove());
+
+                selectedPhotos.forEach((p, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'photo-thumb';
+                    div.innerHTML = `
+                        <img src="${p.url}" alt="photo ${idx + 1}" />
+                        <button type="button" class="remove" data-idx="${idx}" aria-label="Supprimer">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    picker.insertBefore(div, picker.firstChild);
+                });
+
+                picker.querySelectorAll('.remove').forEach(btn => {
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        const i = parseInt(btn.dataset.idx, 10);
+                        try { URL.revokeObjectURL(selectedPhotos[i].url); } catch(_) {}
+                        selectedPhotos.splice(i, 1);
+                        renderPhotoPicker();
+                    };
+                });
+
+                const addBtn = picker.querySelector('.photo-btn');
+                if (addBtn) addBtn.style.display = selectedPhotos.length >= 6 ? 'none' : 'flex';
+            }
+
+            function initPhotoPicker() {
+                const input = document.getElementById('photoInput');
+                if (!input || input.dataset.bound) return;
+                input.dataset.bound = '1';
+                input.addEventListener('change', (e) => {
+                    const files = Array.from(e.target.files || []);
+                    const remaining = 6 - selectedPhotos.length;
+                    const toAdd = files.slice(0, remaining);
+                    toAdd.forEach(file => {
+                        if (file.size > 5 * 1024 * 1024) {
+                            showToast(`"${file.name}" dépasse 5 Mo, ignoré.`, 'error');
+                            return;
+                        }
+                        if (!file.type.startsWith('image/')) {
+                            showToast(`"${file.name}" n'est pas une image.`, 'error');
+                            return;
+                        }
+                        selectedPhotos.push({ file, url: URL.createObjectURL(file) });
+                    });
+                    if (files.length > remaining) {
+                        showToast('Maximum 6 photos. Les extras ont été ignorés.', 'info');
+                    }
+                    renderPhotoPicker();
+                    input.value = '';
+                });
+            }
+
             function openPublishModal() {
                 if (!currentUser) {
                     pendingActionAfterLogin = 'publish';
@@ -1290,6 +1423,7 @@
                     return;
                 }
                 resetPublishModal();
+                initPhotoPicker();
                 publishOverlay.classList.add('show');
                 setTimeout(initPublishMap, 50);
             }
@@ -1307,6 +1441,10 @@
                 paymentButtons.style.display = 'flex';
                 selectedLat = null; selectedLng = null;
                 currentAnnonceDraft = null;
+                // Nettoyer les photos
+                selectedPhotos.forEach(p => { try { URL.revokeObjectURL(p.url); } catch(_) {} });
+                selectedPhotos = [];
+                renderPhotoPicker();
             }
 
             document.getElementById('btnDeposer').addEventListener('click', openPublishModal);
@@ -1336,11 +1474,17 @@
                 const titre = document.getElementById('pubTitre').value.trim();
                 const type = document.getElementById('pubType').value;
                 const quartier = document.getElementById('pubQuartier').value.trim();
+                const ville = document.getElementById('pubVille').value.trim();
                 const prix = Number(document.getElementById('pubPrix').value);
+                const moisMin = parseInt(document.getElementById('pubMoisMin').value, 10) || 1;
                 const telephone = document.getElementById('pubTelephone').value.trim();
 
-                if (!titre || !type || !quartier || !prix || !telephone) {
+                if (!titre || !type || !quartier || !prix || !telephone || !ville) {
                     showError(publishError, 'Merci de remplir tous les champs obligatoires.');
+                    return;
+                }
+                if (moisMin < 1) {
+                    showError(publishError, 'Le nombre de mois minimum doit être au moins 1.');
                     return;
                 }
 
@@ -1374,26 +1518,54 @@
                 try {
                     const type = document.getElementById('pubType').value;
 
+                    // 0) Upload des photos vers Supabase Storage
+                    let photoUrls = [];
+                    if (selectedPhotos.length > 0) {
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Upload des photos...';
+                        for (let i = 0; i < selectedPhotos.length; i++) {
+                            const p = selectedPhotos[i];
+                            const ext = (p.file.name.split('.').pop() || 'jpg').toLowerCase();
+                            const path = `${currentUser.id}/${Date.now()}-${i}.${ext}`;
+                            const { error: upErr } = await sb.storage
+                                .from('annonces-photos')
+                                .upload(path, p.file, { upsert: false, cacheControl: '3600' });
+                            if (upErr) {
+                                console.error('Upload error:', upErr);
+                                throw new Error(`Échec upload photo ${i + 1} : ${upErr.message}`);
+                            }
+                            const { data: pub } = sb.storage
+                                .from('annonces-photos')
+                                .getPublicUrl(path);
+                            photoUrls.push(pub.publicUrl);
+                        }
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement...';
+                    }
+
+                    // 1) Créer l'annonce
                     const { data: annonce, error: annonceErr } = await sb
                         .from('annonces')
                         .insert({
                             user_id: currentUser.id,
                             titre: document.getElementById('pubTitre').value.trim(),
                             type,
+                            ville: document.getElementById('pubVille').value.trim() || 'Yaoundé',
                             quartier: document.getElementById('pubQuartier').value.trim(),
                             prix: Number(document.getElementById('pubPrix').value),
                             superficie: Number(document.getElementById('pubSuperficie').value) || null,
                             chambres: Number(document.getElementById('pubChambres').value) || null,
                             sdb: Number(document.getElementById('pubSdb').value) || null,
+                            mois_minimum: parseInt(document.getElementById('pubMoisMin').value, 10) || 1,
                             telephone: document.getElementById('pubTelephone').value.trim(),
                             description: document.getElementById('pubDescription').value.trim() || null,
                             lat: selectedLat, lng: selectedLng,
+                            photos: photoUrls,
                             verified: false
                         })
                         .select().single();
                     if (annonceErr) throw annonceErr;
                     currentAnnonceDraft = annonce;
 
+                    // 2) Créer le paiement
                     const { data: paiement, error: paiementErr } = await sb
                         .from('paiements')
                         .insert({
@@ -1407,6 +1579,7 @@
                         .select().single();
                     if (paiementErr) throw paiementErr;
 
+                    // 3) Déclencher la Edge Function (simulation)
                     const { data: sessionData } = await sb.auth.getSession();
                     const token = sessionData.session.access_token;
 
@@ -1418,6 +1591,7 @@
                     const result = await resp.json();
                     if (!resp.ok) throw new Error(result.error || "Échec de l'envoi de la demande de paiement.");
 
+                    // 4) Attente + polling
                     document.getElementById('paymentWaitingPhone').textContent = orangePhone;
                     paymentWaiting.classList.add('active');
                     paymentButtons.style.display = 'none';
